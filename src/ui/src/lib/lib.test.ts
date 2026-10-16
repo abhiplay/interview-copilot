@@ -143,6 +143,21 @@ describe('ApiClient', () => {
     expect(api.transcriptPdfUrl('s1')).toBe('http://api.test/api/sessions/s1/transcript/pdf');
   });
 
+  it('calls the wave-3 provider and session-key endpoints', async () => {
+    const { api, fetchImpl } = fakeApi(() => json({}));
+
+    await api.setLlmChoice('openai', 'gpt-test');
+    await api.setSpeechToTextProvider(null);
+    await api.setSessionKey('s1', 'openai', 'sk-test');
+
+    const calls = fetchImpl.mock.calls.map(([url, init]) => [`${init?.method} ${String(url).replace('http://api.test', '')}`, init?.body]);
+    expect(calls).toEqual([
+      ['PUT /api/preferences/llm', JSON.stringify({ provider: 'openai', model: 'gpt-test' })],
+      ['PUT /api/preferences/speech-to-text', JSON.stringify({ provider: null })],
+      ['PUT /api/sessions/s1/keys/openai', JSON.stringify({ key: 'sk-test' })],
+    ]);
+  });
+
   it('streams answer events to the handlers and sends the BYOK key header', async () => {
     const { api, fetchImpl } = fakeApi(() =>
       sse(['meta', '{"questionType":"Behavioral","version":1}'], ['delta', 'Hi'], ['delta', ' there'], ['error', 'oops'], ['done', '']),

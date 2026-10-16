@@ -36,6 +36,23 @@ internal sealed class UserPreferencesRepository(InterviewCopilotDbContext db) : 
     public void Add(UserPreferences preferences) => db.UserPreferences.Add(preferences);
 }
 
+internal sealed class PairedBrowserRepository(InterviewCopilotDbContext db) : IPairedBrowserRepository
+{
+    public Task<PairedBrowser?> GetAsync(Guid id, CancellationToken cancellationToken) =>
+        db.PairedBrowsers.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+
+    public Task<PairedBrowser?> FindByTokenHashAsync(string tokenHash, CancellationToken cancellationToken) =>
+        db.PairedBrowsers.FirstOrDefaultAsync(b => b.TokenHash == tokenHash, cancellationToken);
+
+    public async Task<IReadOnlyList<PairedBrowser>> ListAsync(Guid userId, CancellationToken cancellationToken) =>
+        await db.PairedBrowsers
+            .Where(b => b.UserId == userId)
+            .OrderBy(b => b.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+    public void Add(PairedBrowser browser) => db.PairedBrowsers.Add(browser);
+}
+
 internal sealed class TranscriptRepository(InterviewCopilotDbContext db) : ITranscriptRepository
 {
     public async Task<IReadOnlyList<TranscriptSegment>> GetSegmentsAsync(Guid sessionId, CancellationToken cancellationToken) =>

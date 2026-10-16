@@ -166,6 +166,24 @@ export class ApiClient {
     return this.json('/api/preferences', { method: 'PUT', body: JSON.stringify({ llmModel }) });
   }
 
+  /** Chooses the chat provider and its model together (#30); null means the configured default. */
+  setLlmChoice(provider: string | null, model: string | null): Promise<Preferences> {
+    return this.json('/api/preferences/llm', { method: 'PUT', body: JSON.stringify({ provider, model }) });
+  }
+
+  /** Chooses the speech-to-text provider (#20); null means the configured default. */
+  setSpeechToTextProvider(provider: string | null): Promise<Preferences> {
+    return this.json('/api/preferences/speech-to-text', { method: 'PUT', body: JSON.stringify({ provider }) });
+  }
+
+  /** Hands a BYOK key to a live session; the backend keeps it in memory only until the session ends. */
+  async setSessionKey(sessionId: string, provider: string, key: string): Promise<void> {
+    await this.send(`/api/sessions/${sessionId}/keys/${encodeURIComponent(provider)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ key }),
+    });
+  }
+
   transcriptPdfUrl(sessionId: string): string {
     return `${this.baseUrl}/api/sessions/${sessionId}/transcript/pdf`;
   }

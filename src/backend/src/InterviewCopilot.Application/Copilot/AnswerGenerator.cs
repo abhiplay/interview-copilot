@@ -25,7 +25,8 @@ public sealed class AnswerGenerator(
     ISessionRepository sessions,
     ITranscriptRepository transcripts,
     IUnitOfWork unitOfWork,
-    ILlmProvider llm,
+    ILlmProviderResolver llmProviders,
+    ISessionKeyStore sessionKeys,
     IOptions<LlmOptions> llmOptions,
     TimeProvider clock,
     ISessionEventPublisher events,
@@ -56,16 +57,22 @@ public sealed class AnswerGenerator(
             request.PreviousAnswer);
 
         var options = llmOptions.Value;
-        var preferred = (await preferences.GetAsync(session.OwnerId, cancellationToken))?.LlmModel;
-        var model = string.IsNullOrWhiteSpace(preferred) ? options.Model : preferred;
-        var llmRequest = new LlmRequest(model, AnswerPromptBuilder.Build(input), options.Temperature, request.ApiKey);
+        var owner = await preferences.GetAsync(session.OwnerId, cancellationToken);
+        var providerName = string.IsNullOrWhiteSpace(owner?.LlmProvider) ? options.Provider : owner.LlmProvider;
+        var model = string.IsNullOrWhiteSpace(owner?.LlmModel) ? options.Model : owner.LlmModel;
+        var llm = llmProviders.Resolve(providerName);
+
+        // A key handed to the live session wins; a per-request key still works for manual answers (#30).
+        var apiKey = sessionKeys.TryGet(session.Id, providerName) ?? request.ApiKey;
+        var llmRequest = new LlmRequest(model, AnswerPromptBuilder.Build(input), options.Temperature, apiKey);
         var version = request.PreviousVersion + 1;
 
         return (new AnswerHeader(questionType, version),
-            StreamAndPersistAsync(session.Id, request, questionType, version, llmRequest, cancellationToken));
+            StreamAndPersistAsync(llm, session.Id, request, questionType, version, llmRequest, cancellationToken));
     }
 
     private async IAsyncEnumerable<string> StreamAndPersistAsync(
+        ILlmProvider llm,
         Guid sessionId,
         AnswerRequest request,
         QuestionType questionType,

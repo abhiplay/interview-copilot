@@ -15,6 +15,9 @@ public sealed record CreateSessionRequest(
 
 public sealed record SetAutoAnswerRequest(bool Enabled);
 
+/// <summary>PUT /api/sessions/{id}/keys/{provider}: a BYOK key for this live session only (wave 3).</summary>
+public sealed record SetSessionKeyRequest(string Key);
+
 internal static class SessionEndpoints
 {
     public static void MapSessionEndpoints(this IEndpointRouteBuilder app)
@@ -61,5 +64,17 @@ internal static class SessionEndpoints
 
         group.MapPost("/{sessionId:guid}/end", (Guid sessionId, ClaimsPrincipal user, SessionService sessions, CancellationToken ct) =>
             sessions.EndAsync(user.UserId(), sessionId, ct));
+
+        group.MapPut("/{sessionId:guid}/keys/{provider}", async (
+            Guid sessionId,
+            string provider,
+            SetSessionKeyRequest request,
+            ClaimsPrincipal user,
+            SessionService sessions,
+            CancellationToken ct) =>
+        {
+            await sessions.SetSessionKeyAsync(user.UserId(), sessionId, provider, request.Key, ct);
+            return Results.NoContent();
+        });
     }
 }

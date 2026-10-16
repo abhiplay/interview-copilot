@@ -1,8 +1,10 @@
 using InterviewCopilot.Application.Common.Exceptions;
 using InterviewCopilot.Application.Common.Interfaces;
 using InterviewCopilot.Application.Events;
+using InterviewCopilot.Application.Providers;
 using InterviewCopilot.Domain.Entities;
 using InterviewCopilot.Domain.Enums;
+using InterviewCopilot.Domain.Exceptions;
 
 namespace InterviewCopilot.Application.Sessions;
 
@@ -63,8 +65,11 @@ public sealed class SessionService(
     ISessionRepository sessions,
     IUnitOfWork unitOfWork,
     TimeProvider clock,
-    ISessionEventPublisher? events = null)
+    ISessionEventPublisher? events = null,
+    ISessionKeyStore? sessionKeys = null)
 {
+    public const int MaxApiKeyLength = 512;
+
     public async Task<SessionDto> CreateAsync(CreateSessionCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
@@ -110,7 +115,34 @@ public sealed class SessionService(
         var session = await LoadOwnedAsync(ownerId, sessionId, cancellationToken);
         session.End(clock.GetUtcNow());
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        sessionKeys?.Clear(session.Id);
         return SessionDto.From(session);
+    }
+
+    /// <summary>
+    /// Hands a BYOK key to a live session so backend-side work (auto-answer, Deepgram) can use it. Kept in
+    /// memory only and cleared when the session ends (wave-3 owner decision).
+    /// </summary>
+    public async Task SetSessionKeyAsync(Guid ownerId, Guid sessionId, string provider, string key, CancellationToken cancellationToken)
+    {
+        if (!ProviderNames.KeyedProviders.Contains(provider))
+        {
+            throw new DomainException("That provider doesn't take an API key.");
+        }
+
+        if (string.IsNullOrWhiteSpace(key) || key.Length > MaxApiKeyLength)
+        {
+            throw new DomainException($"API keys must be 1 to {MaxApiKeyLength} characters.");
+        }
+
+        var session = await LoadOwnedAsync(ownerId, sessionId, cancellationToken);
+        if (session.Status != SessionStatus.Live)
+        {
+            throw new ConflictException("Keys can only be handed to a live session.");
+        }
+
+        (sessionKeys ?? throw new InvalidOperationException("No session key store is registered."))
+            .Store(session.Id, provider, key.Trim());
     }
 
     /// <summary>Pauses or resumes automatic answers and tells everyone watching the session (#22).</summary>

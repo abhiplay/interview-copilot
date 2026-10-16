@@ -5,6 +5,13 @@ public static class ProviderNames
     public const string Whisper = "whisper";
     public const string Deepgram = "deepgram";
     public const string Ollama = "ollama";
+    public const string Anthropic = "anthropic";
+    public const string OpenAi = "openai";
+    public const string Google = "google";
+
+    /// <summary>Cloud providers whose BYOK key may be handed to a live session (#30, #20).</summary>
+    public static readonly IReadOnlySet<string> KeyedProviders =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { Deepgram, Anthropic, OpenAi, Google };
 }
 
 /// <summary>Bound from the "Transcription" config section.</summary>

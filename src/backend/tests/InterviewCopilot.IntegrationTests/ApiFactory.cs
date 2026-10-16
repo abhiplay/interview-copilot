@@ -78,7 +78,7 @@ public sealed class ScriptedLlm : ILlmProvider
 
     public bool Fail { get; set; }
 
-    public string Name => "scripted";
+    public string Name => ProviderNames.Ollama; // stands in for the configured default provider
 
     public async IAsyncEnumerable<string> StreamAsync(LlmRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
@@ -124,7 +124,7 @@ public sealed class ScriptedStt : ISpeechToTextProvider
 
     public bool Fail { get; set; }
 
-    public string Name => "scripted";
+    public string Name => ProviderNames.Ollama; // stands in for the configured default provider
 
     public Task<TranscriptionResult> TranscribeAsync(AudioChunk chunk, string? apiKey, CancellationToken cancellationToken)
     {

@@ -132,6 +132,12 @@ export interface Preferences {
   llmModel: string | null;
   /** The backend's configured default (Llm:Model), shown as "Default (<name>)". */
   defaultLlmModel: string;
+  /** Chosen chat provider (#30), e.g. "ollama" or "openai"; null means the configured default. */
+  llmProvider: string | null;
+  defaultLlmProvider: string;
+  /** Chosen speech-to-text provider (#20); null means the configured default. */
+  speechToTextProvider: string | null;
+  defaultSpeechToTextProvider: string;
 }
 
 export interface AnswerHeader {

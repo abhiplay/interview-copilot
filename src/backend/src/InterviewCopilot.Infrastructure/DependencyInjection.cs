@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IUserAccountRepository, UserAccountRepository>();
         services.AddScoped<ITranscriptRepository, TranscriptRepository>();
         services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
+        services.AddScoped<IPairedBrowserRepository, PairedBrowserRepository>();
 
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
         services.AddSingleton<IDocumentTextExtractor, PlainTextExtractor>();
@@ -46,11 +47,14 @@ public static class DependencyInjection
         services.AddSingleton<IDocumentTextExtractor, DocxTextExtractor>();
         services.AddSingleton<IPdfExporter, QuestPdfTranscriptExporter>();
 
-        services.AddHttpClient<ILlmProvider, OllamaLlmProvider>((provider, http) =>
+        // Each chat provider is a typed client of its own class (so their HttpClient settings don't merge)
+        // and is also exposed as ILlmProvider for ILlmProviderResolver. BYOK providers (#30) follow suit.
+        services.AddHttpClient<OllamaLlmProvider>((provider, http) =>
         {
             http.BaseAddress = provider.GetRequiredService<IOptions<LlmOptions>>().Value.Ollama.BaseUrl;
             http.Timeout = Timeout.InfiniteTimeSpan; // streaming; cancellation comes from the request
         });
+        services.AddTransient<ILlmProvider>(provider => provider.GetRequiredService<OllamaLlmProvider>());
 
         services.AddHttpClient<IOllamaModelCatalog, OllamaModelCatalog>((provider, http) =>
         {

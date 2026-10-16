@@ -47,6 +47,8 @@ public sealed class AutoAnswerServiceTests : IDisposable
         services.AddSingleton<IUnitOfWork>(_store);
         services.AddSingleton<IUserPreferencesRepository>(new InMemoryPreferences()); // AnswerGenerator dependency since #31
         services.AddScoped<ILlmProvider>(provider => _llm);
+        services.AddScoped<ILlmProviderResolver, LlmProviderResolver>();
+        services.AddSingleton<ISessionKeyStore, InMemorySessionKeyStore>();
         services.AddSingleton<ISessionEventPublisher>(_events);
         services.AddSingleton<TimeProvider>(new FixedClock());
         services.AddSingleton(Options.Create(new LlmOptions { Model = "m", Temperature = 0.2 }));
@@ -218,7 +220,7 @@ public sealed class AutoAnswerServiceTests : IDisposable
 
         public TaskCompletionSource FirstTokenSent { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public string Name => "scripted";
+        public string Name => ProviderNames.Ollama; // stands in for the configured default provider
 
         public async IAsyncEnumerable<string> StreamAsync(LlmRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
         {

@@ -36,6 +36,18 @@ public interface IUserPreferencesRepository
     void Add(UserPreferences preferences);
 }
 
+/// <summary>Browser extensions paired with an account (#33).</summary>
+public interface IPairedBrowserRepository
+{
+    Task<PairedBrowser?> GetAsync(Guid id, CancellationToken cancellationToken);
+
+    Task<PairedBrowser?> FindByTokenHashAsync(string tokenHash, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<PairedBrowser>> ListAsync(Guid userId, CancellationToken cancellationToken);
+
+    void Add(PairedBrowser browser);
+}
+
 public interface IUnitOfWork
 {
     Task SaveChangesAsync(CancellationToken cancellationToken);

@@ -26,7 +26,13 @@ public class PreferencesServiceTests
     private readonly PreferencesService _service;
 
     public PreferencesServiceTests() =>
-        _service = new PreferencesService(_repo, _store, new FixedClock(), Options.Create(new LlmOptions { Model = "llama3.2:3b" }));
+        _service = new PreferencesService(
+            _repo,
+            _store,
+            new FixedClock(),
+            Options.Create(new LlmOptions { Model = "llama3.2:3b" }),
+            Options.Create(new TranscriptionOptions()),
+            new ProviderCatalog(Options.Create(new TranscriptionOptions()), Options.Create(new LlmOptions())));
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

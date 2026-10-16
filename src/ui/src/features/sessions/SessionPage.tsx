@@ -8,6 +8,7 @@ import { LiveAssistant } from '@/features/copilot/LiveAssistant';
 import { useApp } from '@/lib/app-context';
 import { QUESTION_TYPE_LABELS, type Session } from '@/types/api';
 import { SessionSettingsCard } from './SessionSettingsCard';
+import { startLiveSession } from './start-live';
 
 export function SessionPage() {
   const { sessionId = '' } = useParams();
@@ -72,9 +73,8 @@ export function SessionPage() {
             <Button
               onClick={() =>
                 void run(async () => {
-                  const started = await api.startSession(session.id);
+                  const started = await startLiveSession(api, platform, session.id);
                   await platform.showOverlay(session.id);
-                  await platform.startCapture(session.id);
                   return started;
                 })
               }

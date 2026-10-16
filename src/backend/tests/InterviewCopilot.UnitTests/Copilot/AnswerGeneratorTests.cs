@@ -23,8 +23,11 @@ public class AnswerGeneratorTests
 
     private readonly InMemoryPreferences _preferences = new();
 
-    private AnswerGenerator Generator(FakeLlm llm) =>
-        new(_store, _store, _store, llm, Options.Create(new LlmOptions { Model = "llama3.2:3b", Temperature = 0.2 }), new FixedClock(), _events, _preferences);
+    private readonly InMemorySessionKeyStore _keys = new();
+
+    private AnswerGenerator Generator(params ILlmProvider[] llms) =>
+        new(_store, _store, _store, new LlmProviderResolver(llms), _keys,
+            Options.Create(new LlmOptions { Model = "llama3.2:3b", Temperature = 0.2 }), new FixedClock(), _events, _preferences);
 
     [Theory]
     [InlineData("qwen2.5:7b", "qwen2.5:7b")]

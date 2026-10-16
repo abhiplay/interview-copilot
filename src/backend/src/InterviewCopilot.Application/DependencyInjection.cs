@@ -23,6 +23,8 @@ public static class DependencyInjection
 
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ProviderCatalog>();
+        services.AddSingleton<ISessionKeyStore, InMemorySessionKeyStore>();
+        services.AddTransient<ILlmProviderResolver, LlmProviderResolver>();
         services.AddScoped<SessionService>();
         services.AddScoped<DocumentService>();
         services.AddScoped<AccountService>();

@@ -66,7 +66,7 @@ internal sealed class FakeLlm(params string[] tokens) : ILlmProvider
 
     public Exception? ThrowOnStream { get; init; }
 
-    public string Name => "fake";
+    public string Name => ProviderNames.Ollama; // stands in for the configured default provider
 
     public async IAsyncEnumerable<string> StreamAsync(
         LlmRequest request,

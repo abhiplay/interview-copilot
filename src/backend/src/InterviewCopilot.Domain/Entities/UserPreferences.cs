@@ -6,6 +6,7 @@ namespace InterviewCopilot.Domain.Entities;
 public sealed class UserPreferences
 {
     public const int MaxModelLength = 200;
+    public const int MaxProviderLength = 50;
 
     private UserPreferences()
     {
@@ -16,6 +17,12 @@ public sealed class UserPreferences
 
     /// <summary>Ollama model name, e.g. "llama3.2:3b". Null means the configured default.</summary>
     public string? LlmModel { get; private set; }
+
+    /// <summary>Chat model provider, e.g. "ollama" or "openai" (#30). Null means the configured default.</summary>
+    public string? LlmProvider { get; private set; }
+
+    /// <summary>Speech-to-text provider, e.g. "whisper" or "deepgram" (#20). Null means the configured default.</summary>
+    public string? SpeechToTextProvider { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
@@ -32,5 +39,30 @@ public sealed class UserPreferences
 
         LlmModel = trimmed;
         UpdatedAt = now;
+    }
+
+    /// <summary>Chooses the chat provider and its model together; blank values mean the configured defaults.</summary>
+    public void SetLlm(string? provider, string? model, DateTimeOffset now)
+    {
+        var normalized = NormalizeProvider(provider);
+        SetLlmModel(model, now);
+        LlmProvider = normalized;
+    }
+
+    public void SetSpeechToTextProvider(string? provider, DateTimeOffset now)
+    {
+        SpeechToTextProvider = NormalizeProvider(provider);
+        UpdatedAt = now;
+    }
+
+    private static string? NormalizeProvider(string? provider)
+    {
+        var trimmed = string.IsNullOrWhiteSpace(provider) ? null : provider.Trim().ToLowerInvariant();
+        if (trimmed is { Length: > MaxProviderLength })
+        {
+            throw new DomainException($"Provider names can be at most {MaxProviderLength} characters.");
+        }
+
+        return trimmed;
     }
 }
