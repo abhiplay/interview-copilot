@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          global-json-file: src/backend/global.json
+          global-json-file: global.json
       - run: dotnet tool restore
       - run: dotnet restore InterviewCopilot.slnx
       - run: dotnet format InterviewCopilot.slnx --verify-no-changes --no-restore

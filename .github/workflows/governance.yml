@@ -38,7 +38,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         if: matrix.language == 'csharp'
         with:
-          global-json-file: src/backend/global.json
+          global-json-file: global.json
       - uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
