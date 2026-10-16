@@ -54,6 +54,8 @@ describe('ApiClient', () => {
     await api.register('alice', 'secret-value');
     await api.getSession('s1');
     await api.createSession({ title: 't', mode: 'LiveInterview', answerLength: 'Short', framework: 'None', pinnedQuestionType: null, sessionPrompt: '' });
+    await api.updateSessionSettings('s1', { answerLength: 'Long', framework: 'Star', pinnedQuestionType: null, sessionPrompt: '' });
+    await api.getTranscript('s1');
     await api.startSession('s1');
     await api.endSession('s1');
     await api.uploadDocument('s1', new File(['x'], 'a.txt'));
@@ -66,6 +68,8 @@ describe('ApiClient', () => {
       'POST /api/auth/register',
       'GET /api/sessions/s1',
       'POST /api/sessions',
+      'PUT /api/sessions/s1/settings',
+      'GET /api/sessions/s1/transcript',
       'POST /api/sessions/s1/start',
       'POST /api/sessions/s1/end',
       'POST /api/sessions/s1/documents',

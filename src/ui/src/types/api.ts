@@ -59,6 +59,38 @@ export interface CreateSessionInput {
   sessionPrompt: string;
 }
 
+/** PUT /api/sessions/{id}/settings (#10). */
+export interface SessionSettingsInput {
+  answerLength: AnswerLength;
+  framework: AnswerFramework;
+  pinnedQuestionType: QuestionType | null;
+  sessionPrompt: string;
+}
+
+/** GET /api/sessions/{id}/transcript (#28). */
+export interface TranscriptEntry {
+  atMs: number;
+  speaker: Speaker;
+  text: string;
+}
+
+export interface TranscriptAnswer {
+  createdAt: string;
+  question: string;
+  questionType: QuestionType;
+  version: number;
+  text: string;
+}
+
+export interface Transcript {
+  sessionId: string;
+  title: string;
+  mode: SessionMode;
+  createdAt: string;
+  entries: TranscriptEntry[];
+  answers: TranscriptAnswer[];
+}
+
 export interface ProviderInfo {
   name: string;
   displayName: string;

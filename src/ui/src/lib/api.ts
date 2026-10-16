@@ -6,6 +6,8 @@ import type {
   DocumentSummary,
   Providers,
   Session,
+  SessionSettingsInput,
+  Transcript,
 } from '@/types/api';
 
 export const DEFAULT_API_BASE_URL = 'http://127.0.0.1:5480';
@@ -73,6 +75,14 @@ export class ApiClient {
 
   createSession(input: CreateSessionInput): Promise<Session> {
     return this.json('/api/sessions', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  updateSessionSettings(id: string, input: SessionSettingsInput): Promise<Session> {
+    return this.json(`/api/sessions/${id}/settings`, { method: 'PUT', body: JSON.stringify(input) });
+  }
+
+  getTranscript(id: string): Promise<Transcript> {
+    return this.json(`/api/sessions/${id}/transcript`);
   }
 
   startSession(id: string): Promise<Session> {
