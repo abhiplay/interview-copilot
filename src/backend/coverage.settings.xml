@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Microsoft code coverage settings, passed to dotnet test with the coverage-settings option.
+     Exempt: generated migrations, Aspire host, test assemblies. [ExcludeFromCodeCoverage] is honoured. -->
+<Configuration>
+  <CodeCoverage>
+    <ModulePaths>
+      <Include>
+        <ModulePath>.*InterviewCopilot\.(Domain|Application|Infrastructure|Api|ServiceDefaults)\.dll$</ModulePath>
+      </Include>
+    </ModulePaths>
+    <Sources>
+      <Exclude>
+        <Source>.*[\\/]Migrations[\\/].*</Source>
+      </Exclude>
+    </Sources>
+    <Attributes>
+      <Exclude>
+        <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+        <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
+        <Attribute>^System\.Runtime\.CompilerServices\.CompilerGeneratedAttribute$</Attribute>
+      </Exclude>
+    </Attributes>
+  </CodeCoverage>
+</Configuration>

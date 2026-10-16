@@ -1,0 +1,76 @@
+# Pre-commit configuration — Gartner governance checkpoint #2 (pre-commit/push).
+# Runs the same tools as the generation hooks and CI.
+# Install once: pipx install pre-commit && pre-commit install && pre-commit install --hook-type commit-msg --hook-type pre-push
+# InterviewCopilot
+
+repos:
+  # ─── Hygiene ──────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.md$
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-yaml
+      - id: check-json
+        exclude: tsconfig.*\.json$ # tsconfig allows comments
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: fix-byte-order-marker
+
+  # ─── Secret detection (Secure invariant) ─────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  # ─── Conventional commits (Auditable invariant) ──────────────────────
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, docs, test, refactor, chore, perf, ci, build, revert]
+
+  # ─── .NET backend ────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: dotnet-format
+        name: dotnet format
+        entry: dotnet format src/backend/InterviewCopilot.slnx --verify-no-changes
+        language: system
+        pass_filenames: false
+        files: ^src/backend/.*\.(cs|csproj|props|slnx)$
+      - id: dotnet-test
+        name: dotnet test
+        entry: dotnet test --solution src/backend/InterviewCopilot.slnx
+        language: system
+        pass_filenames: false
+        files: ^src/backend/.*\.cs$
+        stages: [pre-push]
+
+  # ─── TypeScript packages (ui, desktop, extension) ────────────────────
+  - repo: local
+    hooks:
+      - id: pnpm-lint
+        name: pnpm lint
+        entry: pnpm lint
+        language: system
+        pass_filenames: false
+        files: ^src/(ui|desktop|extension)/.*\.(ts|tsx|js|mjs)$
+      - id: pnpm-typecheck
+        name: pnpm typecheck
+        entry: pnpm typecheck
+        language: system
+        pass_filenames: false
+        files: ^src/(ui|desktop|extension)/.*\.(ts|tsx)$
+      - id: pnpm-test
+        name: pnpm test
+        entry: pnpm test
+        language: system
+        pass_filenames: false
+        files: ^src/(ui|desktop|extension)/.*\.(ts|tsx)$
+        stages: [pre-push]

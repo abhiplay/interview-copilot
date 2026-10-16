@@ -1,0 +1,104 @@
+# Release channels (CLAUDE.md): tag vX.Y.Z-beta.N → GitHub pre-release (beta); tag vX.Y.Z → release.
+# Installers are unsigned by design (zero-cost principle); README explains the OS warnings.
+name: release
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  desktop:
+    name: Desktop installer (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            builder: --win --x64
+          - os: macos-latest
+            rid: osx-arm64
+            builder: --mac --arm64
+          - os: macos-latest # cross-builds Intel on Apple Silicon runners
+            rid: osx-x64
+            builder: --mac --x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: src/backend/global.json
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Fetch the Electron binary (allow-listed install script)
+        run: node node_modules/electron/install.js
+        working-directory: src/desktop
+      - name: Publish backend (self-contained)
+        run: >
+          dotnet publish src/backend/src/InterviewCopilot.Api -c Release -r ${{ matrix.rid }} --self-contained
+          -p:PublishSingleFile=false -o src/desktop/backend-publish
+      - name: Set app version from tag
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd src/desktop && pnpm version "$VERSION" --no-git-tag-version
+      - name: Build installer
+        working-directory: src/desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: pnpm dist ${{ matrix.builder }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.rid }}
+          path: |
+            src/desktop/release/*.exe
+            src/desktop/release/*.dmg
+
+  extension:
+    name: Browser extension packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - run: pnpm --filter @interview-copilot/extension build
+      - name: Zip Chromium build
+        run: cd src/extension/dist/chromium && zip -r "$GITHUB_WORKSPACE/interview-copilot-extension-chromium-${GITHUB_REF_NAME}.zip" .
+      - name: Package Firefox build
+        run: |
+          pnpm --filter @interview-copilot/extension package:firefox
+          mv src/extension/web-ext-artifacts/*.zip "interview-copilot-extension-firefox-${GITHUB_REF_NAME}.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension
+          path: "*.zip"
+
+  publish:
+    name: Publish GitHub release
+    needs: [desktop, extension]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create release (pre-release for -beta tags)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FLAGS="--generate-notes"
+          case "$GITHUB_REF_NAME" in *-beta*) FLAGS="$FLAGS --prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" artifacts/* --title "$GITHUB_REF_NAME" $FLAGS

@@ -1,0 +1,63 @@
+import { describe, expect, it, vi } from 'vitest';
+import { createWebPlatform, DEFAULT_SETTINGS, detectPlatform, type DesktopBridge } from './index';
+
+function fakeBridge(): DesktopBridge {
+  return {
+    getAuthToken: vi.fn().mockResolvedValue('t'),
+    setAuthToken: vi.fn().mockResolvedValue(undefined),
+    getApiKey: vi.fn().mockResolvedValue('k'),
+    setApiKey: vi.fn().mockResolvedValue(undefined),
+    deleteApiKey: vi.fn().mockResolvedValue(undefined),
+    setOverlayOpacity: vi.fn().mockResolvedValue(undefined),
+    showOverlay: vi.fn().mockResolvedValue(undefined),
+    hideOverlay: vi.fn().mockResolvedValue(undefined),
+    getSettings: vi.fn().mockResolvedValue(DEFAULT_SETTINGS),
+    setSettings: vi.fn().mockResolvedValue(DEFAULT_SETTINGS),
+  };
+}
+
+describe('platform', () => {
+  it('uses the desktop bridge when the preload exposed it', async () => {
+    const bridge = fakeBridge();
+    const platform = detectPlatform({ interviewCopilot: bridge } as unknown as Window);
+
+    expect(platform.kind).toBe('desktop');
+    await platform.getAuthToken();
+    await platform.setAuthToken('x');
+    await platform.getApiKey('deepgram');
+    await platform.setApiKey('deepgram', 'k');
+    await platform.deleteApiKey('deepgram');
+    await platform.setOverlayOpacity(0.5);
+    await platform.showOverlay('s1');
+    await platform.hideOverlay();
+    await platform.getSettings();
+    await platform.setSettings({ autoStartOnMeeting: true });
+
+    expect(bridge.setApiKey).toHaveBeenCalledWith('deepgram', 'k');
+    expect(bridge.showOverlay).toHaveBeenCalledWith('s1');
+    expect(bridge.setSettings).toHaveBeenCalledWith({ autoStartOnMeeting: true });
+  });
+
+  it('falls back to a web platform that never stores API keys', async () => {
+    const platform = detectPlatform({} as Window);
+
+    expect(platform.kind).toBe('web');
+    await expect(platform.setApiKey('openai', 'k')).rejects.toThrow('desktop app');
+    expect(await platform.getApiKey('openai')).toBeNull();
+  });
+
+  it('keeps web settings and token in memory', async () => {
+    const platform = createWebPlatform();
+
+    await platform.setAuthToken('abc');
+    const updated = await platform.setSettings({ overlayOpacity: 0.5 });
+    await platform.deleteApiKey('x');
+    await platform.setOverlayOpacity(0.5);
+    await platform.showOverlay('s');
+    await platform.hideOverlay();
+
+    expect(await platform.getAuthToken()).toBe('abc');
+    expect(updated).toEqual({ overlayOpacity: 0.5, autoStartOnMeeting: false });
+    expect(await platform.getSettings()).toEqual(updated);
+  });
+});

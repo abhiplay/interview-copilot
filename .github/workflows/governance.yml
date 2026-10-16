@@ -1,0 +1,107 @@
+# Governance — Gartner 7-invariant pipeline gate (checkpoint #3). See GOVERNANCE.md.
+# Functional + Tested run in ci.yml; this workflow adds Secure + Auditable checks in a clean env.
+# Any failing job blocks the merge (make "Governance gate" a required check on main).
+name: governance
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # weekly re-scan for newly published CVEs
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: read
+
+jobs:
+  secrets:
+    name: Secure — secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: Secure — SAST (CodeQL)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [csharp, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        if: matrix.language == 'csharp'
+        with:
+          global-json-file: src/backend/global.json
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.language == 'csharp' && 'manual' || 'none' }}
+      - if: matrix.language == 'csharp'
+        run: dotnet build src/backend/InterviewCopilot.slnx --configuration Release
+      - uses: github/codeql-action/analyze@v3
+
+  dependencies:
+    name: Secure — dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          # MIT project: block copyleft licences that would conflict with distribution.
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0
+
+  auditable:
+    name: Auditable — SBOM + conventional commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Conventional commit titles
+        if: github.event_name == 'pull_request'
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "$TITLE" | grep -Eq '^(feat|fix|docs|test|refactor|chore|perf|ci|build|revert)(\(.+\))?!?: .+' \
+            || { echo "PR title must be a conventional commit: $TITLE"; exit 1; }
+      - name: No AI attribution in commits
+        if: github.event_name == 'pull_request'
+        run: |
+          if git log --format=%B origin/${{ github.base_ref }}..HEAD | grep -Eiq 'co-authored-by:.*(claude|anthropic)'; then
+            echo "Commits must not carry AI attribution."; exit 1
+          fi
+      - name: Generate SBOM (syft)
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          output-file: sbom.spdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  report:
+    name: Governance report (soft gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tools/governance-report.sh . || echo "::warning::Governance report found debt (see log)"
+
+  governance-gate:
+    name: Governance gate
+    if: always()
+    needs: [secrets, codeql, dependencies, auditable]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All invariant jobs passed
+        run: |
+          echo '${{ toJSON(needs) }}' | grep -q '"result": "failure"' && { echo "An invariant failed."; exit 1; } || echo "All invariants passed."

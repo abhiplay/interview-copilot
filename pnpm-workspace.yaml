@@ -1,0 +1,9 @@
+packages:
+  - src/ui
+  - src/desktop
+  - src/extension
+
+# Install scripts are off by default (.npmrc ignore-scripts). Only these may run theirs:
+onlyBuiltDependencies:
+  - electron
+  - esbuild

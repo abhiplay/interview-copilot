@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>InterviewCopilot</title>
+    <style>
+      body { width: 280px; margin: 0; padding: 14px; font: 14px/1.4 system-ui, sans-serif; display: grid; gap: 8px; }
+      input, button { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid #ccc; }
+      button { background: #3b4bc8; color: #fff; border: 0; cursor: pointer; }
+      .muted { color: #666; font-size: 12px; }
+      .error { color: #b42318; }
+      [hidden] { display: none !important; }
+      @media (prefers-color-scheme: dark) { body { background: #1d1f27; color: #eee; } }
+    </style>
+  </head>
+  <body>
+    <strong>InterviewCopilot</strong>
+    <form id="sign-in" hidden>
+      <div style="display: grid; gap: 6px">
+        <input id="username" aria-label="Username" placeholder="Username" autocomplete="username" required />
+        <input id="password" aria-label="Password" type="password" placeholder="Password" autocomplete="current-password" required />
+        <button type="submit">Sign in</button>
+        <span class="muted">Use your InterviewCopilot desktop account. The desktop app must be running.</span>
+      </div>
+    </form>
+    <section id="signed-in" hidden>
+      <p id="sessions" class="muted"></p>
+      <button id="sign-out" type="button">Sign out</button>
+    </section>
+    <p id="error" class="error" role="alert"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

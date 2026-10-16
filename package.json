@@ -1,0 +1,25 @@
+{
+  "name": "interview-copilot",
+  "private": true,
+  "description": "Free, open-source real-time AI interview and conversation assistant",
+  "license": "MIT",
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "dotnet run --project src/backend/src/InterviewCopilot.AppHost",
+    "dev:backend": "dotnet run --project src/backend/src/InterviewCopilot.Api",
+    "dev:desktop": "pnpm --filter @interview-copilot/desktop dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "typescript": "6.0.3"
+  }
+}

@@ -1,0 +1,15 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.1">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>io.github.ukez15.interviewcopilot.apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\InterviewCopilot.Api\InterviewCopilot.Api.csproj" />
+  </ItemGroup>
+</Project>

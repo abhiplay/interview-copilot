@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/InterviewCopilot.Domain/InterviewCopilot.Domain.csproj" />
+    <Project Path="src/InterviewCopilot.Application/InterviewCopilot.Application.csproj" />
+    <Project Path="src/InterviewCopilot.Infrastructure/InterviewCopilot.Infrastructure.csproj" />
+    <Project Path="src/InterviewCopilot.Api/InterviewCopilot.Api.csproj" />
+    <Project Path="src/InterviewCopilot.ServiceDefaults/InterviewCopilot.ServiceDefaults.csproj" />
+    <Project Path="src/InterviewCopilot.AppHost/InterviewCopilot.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InterviewCopilot.UnitTests/InterviewCopilot.UnitTests.csproj" />
+    <Project Path="tests/InterviewCopilot.IntegrationTests/InterviewCopilot.IntegrationTests.csproj" />
+    <Project Path="tests/InterviewCopilot.ArchTests/InterviewCopilot.ArchTests.csproj" />
+  </Folder>
+</Solution>

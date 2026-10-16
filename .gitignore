@@ -1,0 +1,87 @@
+# ============================================================
+# .gitignore — InterviewCopilot
+# ============================================================
+
+# ----- OS -----
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# ----- IDE -----
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.swp
+*.swo
+
+# ----- .NET -----
+bin/
+obj/
+.vs/
+*.log
+coverage/
+TestResults/
+*.nupkg
+*.snupkg
+local.settings.json
+appsettings.local.json
+appsettings.Development.json
+
+# ----- Node / Frontend / Electron -----
+node_modules/
+dist/
+dist-electron/
+release/
+out/
+.pnpm-store/
+.pnpm-debug.log
+*.tsbuildinfo
+web-ext-artifacts/
+
+# ----- Secrets / Credentials -----
+# BYOK API keys live in the OS keychain, never in files.
+*.env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# ----- Aspire -----
+.aspire/
+
+# ----- Local temp -----
+.tmp/
+tmp/
+scratch/
+
+# ----- Local data (SQLite DB, uploaded documents, downloaded models) -----
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+models/
+*.bin
+*.gguf
+
+# ----- Reports -----
+reports/
+coverage-report/
+sbom.spdx.json
+
+# ----- Claude provenance ledger -----
+# Local-only; uploaded as a CI artifact, NOT committed.
+.claude/provenance/

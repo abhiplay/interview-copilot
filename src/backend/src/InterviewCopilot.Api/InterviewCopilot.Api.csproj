@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>InterviewCopilot.Api</RootNamespace>
+    <UserSecretsId>io.github.ukez15.interviewcopilot.api</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\InterviewCopilot.Infrastructure\InterviewCopilot.Infrastructure.csproj" />
+    <ProjectReference Include="..\InterviewCopilot.ServiceDefaults\InterviewCopilot.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="InterviewCopilot.IntegrationTests" />
+  </ItemGroup>
+</Project>

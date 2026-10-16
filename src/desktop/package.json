@@ -1,0 +1,34 @@
+{
+  "name": "@interview-copilot/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "type": "commonjs",
+  "description": "InterviewCopilot desktop app (Electron): overlay, audio capture, meeting detection, backend lifecycle",
+  "author": "ukez15",
+  "license": "MIT",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "build:main": "tsc -p tsconfig.json",
+    "build:ui": "pnpm --filter @interview-copilot/ui build",
+    "build": "pnpm build:main",
+    "dev": "pnpm build:main && cross-env INTERVIEW_COPILOT_DEV_URL=http://localhost:5173 electron .",
+    "dist": "pnpm build:ui && pnpm build:main && electron-builder --config electron-builder.yml",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "cross-env": "10.1.0",
+    "electron": "44.7.2",
+    "electron-builder": "26.15.3",
+    "eslint": "10.12.0",
+    "globals": "17.13.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.5"
+  }
+}

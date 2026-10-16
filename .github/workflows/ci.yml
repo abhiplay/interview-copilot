@@ -1,0 +1,69 @@
+# CI — build, lint, test and coverage gates (≥75%) for every package. Free on public repos.
+name: ci
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (.NET 10)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: src/backend/global.json
+      - run: dotnet tool restore
+      - run: dotnet restore InterviewCopilot.slnx
+      - run: dotnet format InterviewCopilot.slnx --verify-no-changes --no-restore
+      - run: dotnet build InterviewCopilot.slnx --no-restore --configuration Release
+      - name: Test with coverage
+        run: >
+          dotnet test --solution InterviewCopilot.slnx --no-build --configuration Release
+          --coverage --coverage-output-format cobertura --coverage-settings coverage.settings.xml
+          --results-directory TestResults
+      - name: Coverage gate (≥75% lines)
+        run: |
+          dotnet reportgenerator "-reports:TestResults/**/*.cobertura.xml" "-targetdir:TestResults/report" "-reporttypes:TextSummary;Cobertura"
+          LINE=$(grep -oP 'Line coverage:\s*\K[\d.]+' TestResults/report/Summary.txt)
+          echo "Line coverage: $LINE%"
+          awk -v c="$LINE" 'BEGIN { if (c + 0 < 75) { print "FAIL: coverage below 75%"; exit 1 } }'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: src/backend/TestResults/report
+
+  typescript:
+    name: UI, desktop, extension (TypeScript)
+    runs-on: ubuntu-latest
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # Each package's vitest config fails the run below 75% coverage.
+      - run: pnpm test:coverage
+      - run: pnpm --filter @interview-copilot/ui build
+      - run: pnpm --filter @interview-copilot/extension build
+      - name: Guard — no electron import in the shared UI (Mode C)
+        run: "! grep -rn \"from 'electron'\" src/ui/src"

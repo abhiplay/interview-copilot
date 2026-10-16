@@ -1,0 +1,31 @@
+# Unsigned builds by design (zero-cost principle). README explains the SmartScreen/Gatekeeper steps.
+appId: io.github.ukez15.interviewcopilot
+productName: InterviewCopilot
+copyright: Copyright © 2026 ukez15
+directories:
+  output: release
+files:
+  - dist-electron/**
+  - package.json
+extraResources:
+  - from: ../ui/dist
+    to: ui
+  # Filled by CI: dotnet publish of InterviewCopilot.Api (self-contained) for the target OS.
+  - from: backend-publish
+    to: backend
+win:
+  target: nsis
+  artifactName: InterviewCopilot-${version}-windows-${arch}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target: dmg
+  category: public.app-category.productivity
+  identity: null
+  minimumSystemVersion: "13.0"
+  artifactName: InterviewCopilot-${version}-macos-${arch}.${ext}
+  extendInfo:
+    NSMicrophoneUsageDescription: InterviewCopilot listens to your microphone to transcribe your answers.
+    NSScreenCaptureUsageDescription: InterviewCopilot captures meeting audio so it can transcribe the other side of the call.
+publish: null

@@ -1,0 +1,67 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)",
+      "Bash(npm install:*)",
+      "Bash(npm i:*)",
+      "Bash(npx:*)",
+      "Bash(yarn:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(az * delete:*)",
+      "Bash(az * purge:*)",
+      "Bash(kubectl delete:*)"
+    ],
+    "allow": [
+      "WebFetch(domain:learn.microsoft.com)",
+      "WebFetch(domain:electronjs.org)",
+      "WebFetch(domain:react.dev)",
+      "WebFetch(domain:vite.dev)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:tailwindcss.com)",
+      "WebFetch(domain:developer.mozilla.org)",
+      "WebFetch(domain:developer.chrome.com)",
+      "WebFetch(domain:extensionworkshop.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:ollama.com)",
+      "WebFetch(domain:developers.deepgram.com)",
+      "WebFetch(domain:nuget.org)",
+      "WebFetch(domain:npmjs.com)"
+    ]
+  },
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": [],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/block-npm.sh" },
+          { "type": "command", "command": ".claude/hooks/block-git-push.sh" },
+          { "type": "command", "command": ".claude/hooks/block-claude-attribution.sh" },
+          { "type": "command", "command": ".claude/hooks/block-terraform-apply.sh" },
+          { "type": "command", "command": ".claude/hooks/block-destructive-actions.sh" },
+          { "type": "command", "command": ".claude/hooks/block-no-verify.sh" }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/block-secrets.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/enforce-invariants.sh" },
+          { "type": "command", "command": ".claude/hooks/require-tests.sh" },
+          { "type": "command", "command": ".claude/hooks/provenance-stamp.sh" }
+        ]
+      }
+    ]
+  }
+}
