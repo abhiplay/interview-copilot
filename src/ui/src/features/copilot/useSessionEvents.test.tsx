@@ -37,7 +37,7 @@ describe('useSessionEvents', () => {
 
   it('connects with the access token and delivers parsed frames', async () => {
     const platform = createWebPlatform();
-    await platform.setAuthToken('tok en');
+    await platform.setAuthTokens({ accessToken: 'tok en', refreshToken: 'r' });
     const { wrapper } = setup(platform);
     const events: SessionEvent[] = [];
 
@@ -59,7 +59,7 @@ describe('useSessionEvents', () => {
 
   it('reconnects with 0.5 s, 1 s, 2 s and then 4 s delays, resetting after a successful open', async () => {
     const platform = createWebPlatform();
-    await platform.setAuthToken('t');
+    await platform.setAuthTokens({ accessToken: 't', refreshToken: 'r' });
     const { wrapper } = setup(platform);
     renderHook(() => useSessionEvents('s1', () => undefined, create), { wrapper });
     await flush();
@@ -102,7 +102,7 @@ describe('useSessionEvents', () => {
 
   it('closes the socket and stops reconnecting on unmount', async () => {
     const platform = createWebPlatform();
-    await platform.setAuthToken('t');
+    await platform.setAuthTokens({ accessToken: 't', refreshToken: 'r' });
     const { wrapper } = setup(platform);
     const { unmount } = renderHook(() => useSessionEvents('s1', () => undefined, create), { wrapper });
     await flush();
@@ -119,7 +119,7 @@ describe('useSessionEvents', () => {
 
   it('does not open a socket when unmounted before the token resolves', async () => {
     const platform = createWebPlatform();
-    await platform.setAuthToken('t');
+    await platform.setAuthTokens({ accessToken: 't', refreshToken: 'r' });
     const { wrapper } = setup(platform);
     const { unmount } = renderHook(() => useSessionEvents('s1', () => undefined, create), { wrapper });
 
@@ -133,7 +133,7 @@ describe('useSessionEvents', () => {
     vi.stubGlobal('WebSocket', FakeWebSocket);
     try {
       const platform = createWebPlatform();
-      await platform.setAuthToken('t');
+      await platform.setAuthTokens({ accessToken: 't', refreshToken: 'r' });
       const { wrapper } = setup(platform);
       renderHook(() => useSessionEvents('s1', () => undefined), { wrapper });
       await flush();

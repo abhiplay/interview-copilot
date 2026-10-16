@@ -8,7 +8,7 @@ import { LiveAssistant } from './LiveAssistant';
 
 async function connected() {
   const platform = createWebPlatform();
-  await platform.setAuthToken('tok');
+  await platform.setAuthTokens({ accessToken: 'tok', refreshToken: 'r' });
   return platform;
 }
 
