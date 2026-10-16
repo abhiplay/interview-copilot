@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { MicrophonePicker } from '@/features/audio/MicrophonePicker';
 import { ModelPicker } from '@/features/settings/ModelPicker';
 import { SignOutCard } from '@/features/settings/SignOutCard';
+import { PrivacyCard } from './PrivacyCard';
 import { useApp } from '@/lib/app-context';
 import { clampOpacity, OVERLAY_OPACITY } from '@/lib/utils';
 import { DEFAULT_SETTINGS, type DesktopSettings } from '@/platform';
@@ -83,6 +84,7 @@ export function SettingsPage() {
         </label>
       </Card>
 
+      <PrivacyCard />
       <SpeechModelCard />
       <ModelPicker />
 

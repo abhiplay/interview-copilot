@@ -8,6 +8,7 @@ import type {
   Preferences,
   Providers,
   Session,
+  StorageInfo,
   SessionSettingsInput,
   Transcript,
   WhisperModel,
@@ -138,6 +139,10 @@ export class ApiClient {
 
   providers(): Promise<Providers> {
     return this.json('/api/providers');
+  }
+
+  getStorage(): Promise<StorageInfo> {
+    return this.json('/api/storage');
   }
 
   getWhisperModel(): Promise<WhisperModel> {
