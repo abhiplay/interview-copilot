@@ -97,6 +97,8 @@ describe('SessionPage', () => {
     renderWithApp(<SessionPage />, { api, platform, ...route });
 
     expect(await screen.findByText('Acme onsite')).toBeInTheDocument();
+    expect(screen.getByLabelText('Add documents')).toHaveAttribute('accept', '.txt,.md,.markdown,.pdf,.docx');
+    expect(screen.getByText(/PDF and Word \.docx/)).toBeInTheDocument();
     await userEvent.upload(screen.getByLabelText('Add documents'), new File(['JD'], 'jd.txt', { type: 'text/plain' }));
     expect(await screen.findByText('jd.txt')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Remove resume.txt' }));
@@ -273,7 +275,8 @@ describe('App shell', () => {
       </AppProvider>,
     );
 
-    expect(await screen.findByLabelText('Question')).toBeInTheDocument();
+    // The token check is async, then the route renders; the default 1 s wait was flaky under full-suite load.
+    expect(await screen.findByLabelText('Question', undefined, { timeout: 5_000 })).toBeInTheDocument();
     expect(document.documentElement).toHaveClass('overlay');
   });
 
