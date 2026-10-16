@@ -10,6 +10,7 @@ import type {
   Session,
   SessionSettingsInput,
   Transcript,
+  WhisperModel,
 } from '@/types/api';
 
 export const DEFAULT_API_BASE_URL = 'http://127.0.0.1:5480';
@@ -117,6 +118,15 @@ export class ApiClient {
 
   providers(): Promise<Providers> {
     return this.json('/api/providers');
+  }
+
+  getWhisperModel(): Promise<WhisperModel> {
+    return this.json('/api/providers/whisper/model');
+  }
+
+  /** Starts the (user-initiated) speech model download; 409 means one is already running. */
+  downloadWhisperModel(): Promise<WhisperModel> {
+    return this.json('/api/providers/whisper/model/download', { method: 'POST' });
   }
 
   ollamaModels(): Promise<OllamaModel[]> {

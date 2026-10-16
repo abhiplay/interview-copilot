@@ -10,6 +10,7 @@ import { useApp } from '@/lib/app-context';
 import { clampOpacity, OVERLAY_OPACITY } from '@/lib/utils';
 import { DEFAULT_SETTINGS, type DesktopSettings } from '@/platform';
 import type { ProviderInfo, Providers } from '@/types/api';
+import { SpeechModelCard } from './SpeechModelCard';
 
 export function SettingsPage() {
   const { api, platform } = useApp();
@@ -81,6 +82,7 @@ export function SettingsPage() {
         </label>
       </Card>
 
+      <SpeechModelCard />
       <ModelPicker />
 
       <Card className="grid gap-4">
