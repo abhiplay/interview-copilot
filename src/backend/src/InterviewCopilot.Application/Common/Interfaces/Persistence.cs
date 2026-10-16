@@ -29,6 +29,13 @@ public interface ITranscriptRepository
     void AddAnswer(SuggestedAnswer answer);
 }
 
+public interface IUserPreferencesRepository
+{
+    Task<UserPreferences?> GetAsync(Guid userId, CancellationToken cancellationToken);
+
+    void Add(UserPreferences preferences);
+}
+
 public interface IUnitOfWork
 {
     Task SaveChangesAsync(CancellationToken cancellationToken);

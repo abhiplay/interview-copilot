@@ -4,6 +4,7 @@ using InterviewCopilot.Application.Audio;
 using InterviewCopilot.Application.Common.Interfaces;
 using InterviewCopilot.Application.Events;
 using InterviewCopilot.Application.Providers;
+using InterviewCopilot.Domain.Entities;
 using InterviewCopilot.Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -22,6 +23,7 @@ public sealed class TranscriptionWorkerTests : IAsyncDisposable
     private readonly ServiceProvider _provider;
     private readonly TranscriptionWorker _worker;
     private readonly Guid _sessionId = Guid.NewGuid();
+    private readonly RecordingListener _listener = new();
 
     public TranscriptionWorkerTests()
     {
@@ -30,6 +32,8 @@ public sealed class TranscriptionWorkerTests : IAsyncDisposable
         services.AddSingleton<ITranscriptRepository>(_store);
         services.AddSingleton<IUnitOfWork>(_store);
         services.AddSingleton<ISpeechToTextProvider>(_stt);
+        services.AddSingleton<ITranscriptSegmentListener>(new ThrowingListener());
+        services.AddSingleton<ITranscriptSegmentListener>(_listener);
         _provider = services.BuildServiceProvider();
         _worker = new TranscriptionWorker(
             _sink,
@@ -68,6 +72,38 @@ public sealed class TranscriptionWorkerTests : IAsyncDisposable
         for (var i = 0; i < silentFrames; i++)
         {
             await _sink.OnFrameAsync(_sessionId, new AudioFrame(speaker, Tone(0)), Ct);
+        }
+    }
+
+    [Fact]
+    public async Task Should_NotifyListeners_EvenWhenAnEarlierListenerThrows()
+    {
+        _stt.Reply = "What is your biggest strength?";
+        await _worker.StartAsync(Ct);
+
+        await SendAsync(Speaker.Interviewer, loudFrames: 5, silentFrames: 6);
+        var segment = await _listener.WaitAsync();
+
+        segment.Text.Should().Be("What is your biggest strength?");
+        segment.SessionId.Should().Be(_sessionId);
+    }
+
+    private sealed class ThrowingListener : ITranscriptSegmentListener
+    {
+        public ValueTask OnSegmentAsync(TranscriptSegment segment, CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("listener bug");
+    }
+
+    private sealed class RecordingListener : ITranscriptSegmentListener
+    {
+        private readonly TaskCompletionSource<TranscriptSegment> _first = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<TranscriptSegment> WaitAsync() => _first.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        public ValueTask OnSegmentAsync(TranscriptSegment segment, CancellationToken cancellationToken)
+        {
+            _first.TrySetResult(segment);
+            return ValueTask.CompletedTask;
         }
     }
 

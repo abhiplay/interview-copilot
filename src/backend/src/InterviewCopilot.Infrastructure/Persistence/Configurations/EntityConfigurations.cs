@@ -75,3 +75,14 @@ internal sealed class PracticeAttemptConfiguration : IEntityTypeConfiguration<Pr
         builder.HasOne<Session>().WithMany().HasForeignKey(p => p.SessionId).OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+internal sealed class UserPreferencesConfiguration : IEntityTypeConfiguration<UserPreferences>
+{
+    public void Configure(EntityTypeBuilder<UserPreferences> builder)
+    {
+        builder.HasKey(p => p.UserId);
+        builder.Property(p => p.UserId).ValueGeneratedNever();
+        builder.Property(p => p.LlmModel).HasMaxLength(UserPreferences.MaxModelLength);
+        builder.HasOne<UserAccount>().WithOne().HasForeignKey<UserPreferences>(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}

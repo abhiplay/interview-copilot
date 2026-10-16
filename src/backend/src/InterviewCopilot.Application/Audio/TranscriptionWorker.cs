@@ -70,6 +70,26 @@ public sealed partial class TranscriptionWorker : BackgroundService
     [LoggerMessage(Level = LogLevel.Warning, Message = "Transcription failed for session {SessionId} ({ErrorType}).")]
     private partial void LogTranscriptionFailed(Guid sessionId, string errorType);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "A transcript listener failed for session {SessionId} ({ErrorType}).")]
+    private partial void LogListenerFailed(Guid sessionId, string errorType);
+
+    /// <summary>One failing listener must not stop the others or the transcription itself.</summary>
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Listener failures are isolated and logged.")]
+    private async Task NotifyListenersAsync(IServiceProvider services, Guid sessionId, TranscriptSegment segment, CancellationToken cancellationToken)
+    {
+        foreach (var listener in services.GetServices<ITranscriptSegmentListener>())
+        {
+            try
+            {
+                await listener.OnSegmentAsync(segment, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                LogListenerFailed(sessionId, ex.GetType().Name);
+            }
+        }
+    }
+
     private async Task DrainAsync(SessionPipeline pipeline, CancellationToken cancellationToken)
     {
         try
@@ -117,6 +137,8 @@ public sealed partial class TranscriptionWorker : BackgroundService
                 sessionId,
                 SessionEventTypes.TranscriptSegment,
                 new { id = segment.Id, speaker = speaker.ToString(), startMs = segment.StartMs, endMs = segment.EndMs, text = segment.Text });
+
+            await NotifyListenersAsync(scope.ServiceProvider, sessionId, segment, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

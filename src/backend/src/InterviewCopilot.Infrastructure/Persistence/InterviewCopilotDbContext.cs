@@ -21,6 +21,8 @@ public sealed class InterviewCopilotDbContext(DbContextOptions<InterviewCopilotD
 
     public DbSet<PracticeAttempt> PracticeAttempts => Set<PracticeAttempt>();
 
+    public DbSet<UserPreferences> UserPreferences => Set<UserPreferences>();
+
     Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -58,6 +58,9 @@ namespace InterviewCopilot.Infrastructure.Persistence.Migrations
                     b.Property<int>("AnswerLength")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("AutoAnswer")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
@@ -215,6 +218,23 @@ namespace InterviewCopilot.Infrastructure.Persistence.Migrations
                     b.ToTable("UserAccounts");
                 });
 
+            modelBuilder.Entity("InterviewCopilot.Domain.Entities.UserPreferences", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LlmModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserPreferences");
+                });
+
             modelBuilder.Entity("InterviewCopilot.Domain.Entities.PracticeAttempt", b =>
                 {
                     b.HasOne("InterviewCopilot.Domain.Entities.Session", null)
@@ -256,6 +276,15 @@ namespace InterviewCopilot.Infrastructure.Persistence.Migrations
                     b.HasOne("InterviewCopilot.Domain.Entities.Session", null)
                         .WithMany()
                         .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InterviewCopilot.Domain.Entities.UserPreferences", b =>
+                {
+                    b.HasOne("InterviewCopilot.Domain.Entities.UserAccount", null)
+                        .WithOne()
+                        .HasForeignKey("InterviewCopilot.Domain.Entities.UserPreferences", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

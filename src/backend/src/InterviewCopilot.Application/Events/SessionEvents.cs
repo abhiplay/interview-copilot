@@ -8,6 +8,7 @@ public static class SessionEventTypes
     public const string AnswerDelta = "answer.delta";
     public const string AnswerDone = "answer.done";
     public const string Error = "error";
+    public const string AutoAnswerState = "autoanswer.state";
 }
 
 /// <summary>One event as sent to clients: <c>{"id":n,"type":"…","data":{…}}</c>. Ids increase per session from 1.</summary>

@@ -34,7 +34,8 @@ public sealed record SessionDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset? StartedAt,
     DateTimeOffset? EndedAt,
-    IReadOnlyList<DocumentSummaryDto> Documents)
+    IReadOnlyList<DocumentSummaryDto> Documents,
+    bool AutoAnswer)
 {
     public static SessionDto From(Session session)
     {
@@ -51,7 +52,8 @@ public sealed record SessionDto(
             session.CreatedAt,
             session.StartedAt,
             session.EndedAt,
-            [.. session.Documents.Select(d => new DocumentSummaryDto(d.Id, d.FileName, d.Content.Length, d.CreatedAt))]);
+            [.. session.Documents.Select(d => new DocumentSummaryDto(d.Id, d.FileName, d.Content.Length, d.CreatedAt))],
+            session.AutoAnswer);
     }
 }
 

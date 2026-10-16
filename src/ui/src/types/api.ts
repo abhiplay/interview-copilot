@@ -48,6 +48,8 @@ export interface Session {
   startedAt: string | null;
   endedAt: string | null;
   documents: DocumentSummary[];
+  /** #22: answer detected questions automatically (on by default, pausable). */
+  autoAnswer: boolean;
 }
 
 export interface CreateSessionInput {

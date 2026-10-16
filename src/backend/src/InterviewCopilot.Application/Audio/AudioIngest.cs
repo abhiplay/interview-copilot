@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using InterviewCopilot.Application.Common.Exceptions;
 using InterviewCopilot.Application.Sessions;
+using InterviewCopilot.Domain.Entities;
 using InterviewCopilot.Domain.Enums;
 
 namespace InterviewCopilot.Application.Audio;
@@ -46,6 +47,22 @@ public static class AudioFrameParser
 public interface IAudioFrameSink
 {
     ValueTask OnFrameAsync(Guid sessionId, AudioFrame frame, CancellationToken cancellationToken);
+
+    /// <summary>The session's audio socket closed (normally or not). Default: nothing to do (#43 implements flushing).</summary>
+    /// <param name="sessionId">The session whose stream ended.</param>
+    /// <param name="cancellationToken">Cancels the cleanup.</param>
+    /// <returns>A task that completes when the sink has handled the end of the stream.</returns>
+    ValueTask OnStreamEndedAsync(Guid sessionId, CancellationToken cancellationToken) => ValueTask.CompletedTask;
+}
+
+/// <summary>Notified after each transcript segment is saved and published (#22 auto-answer plugs in here).</summary>
+public interface ITranscriptSegmentListener
+{
+    /// <summary>Handles a new segment. Exceptions are caught and logged by the worker.</summary>
+    /// <param name="segment">The saved segment.</param>
+    /// <param name="cancellationToken">Stops the work when the host shuts down.</param>
+    /// <returns>A task that completes when the listener is done with the segment.</returns>
+    ValueTask OnSegmentAsync(TranscriptSegment segment, CancellationToken cancellationToken);
 }
 
 public sealed record AudioStatsDto(long InterviewerBytes, long CandidateBytes, long Frames, DateTimeOffset? LastFrameAt);

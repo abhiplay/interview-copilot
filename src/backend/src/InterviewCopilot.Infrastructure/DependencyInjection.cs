@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<ISessionRepository, SessionRepository>();
         services.AddScoped<IUserAccountRepository, UserAccountRepository>();
         services.AddScoped<ITranscriptRepository, TranscriptRepository>();
+        services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
 
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
         services.AddSingleton<IDocumentTextExtractor, PlainTextExtractor>();

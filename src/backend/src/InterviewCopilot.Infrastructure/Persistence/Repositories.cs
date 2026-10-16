@@ -28,6 +28,14 @@ internal sealed class UserAccountRepository(InterviewCopilotDbContext db) : IUse
     public void Add(UserAccount account) => db.UserAccounts.Add(account);
 }
 
+internal sealed class UserPreferencesRepository(InterviewCopilotDbContext db) : IUserPreferencesRepository
+{
+    public Task<UserPreferences?> GetAsync(Guid userId, CancellationToken cancellationToken) =>
+        db.UserPreferences.FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+
+    public void Add(UserPreferences preferences) => db.UserPreferences.Add(preferences);
+}
+
 internal sealed class TranscriptRepository(InterviewCopilotDbContext db) : ITranscriptRepository
 {
     public async Task<IReadOnlyList<TranscriptSegment>> GetSegmentsAsync(Guid sessionId, CancellationToken cancellationToken) =>
