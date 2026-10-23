@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createOverlay } from './content/overlay';
 import { renderStatus } from './popup/render';
 import { BackendError, liveSessions, signIn, streamAnswer, toAnswerEvent, type AnswerEvent } from './shared/backend';
-import { ANSWER_PORT, type AnswerPortMessage } from './shared/messages';
+import { ANSWER_PORT, KEEPALIVE_INTERVAL_MS, type AnswerPortMessage } from './shared/messages';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -190,5 +190,89 @@ describe('background worker', () => {
     listener({ kind: 'ask', sessionId: 's', question: 'Q?' });
     await vi.waitFor(() => expect(sent).toHaveLength(4));
     expect(sent[3]).toEqual({ kind: 'event', event: { type: 'error', message: 'Desktop app not running. Open InterviewCopilot first.' } });
+  });
+
+  it('ignores keep-alive pings instead of treating them as new questions', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(sse(['done', '']))));
+    const { handlePort } = await import('./background');
+    const sent: AnswerPortMessage[] = [];
+    let listener: (message: AnswerPortMessage) => void = () => undefined;
+    const port = {
+      name: ANSWER_PORT,
+      postMessage: (m: AnswerPortMessage) => sent.push(m),
+      onMessage: { addListener: (fn: typeof listener) => (listener = fn) },
+    } as unknown as chrome.runtime.Port;
+
+    handlePort(port);
+    store.token = 'tok';
+    listener({ kind: 'ping' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(sent).toHaveLength(0);
+  });
+
+  it('survives the page closing while an answer streams', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(sse(['delta', 'Hi'], ['done', '']))));
+    const { handlePort } = await import('./background');
+    let listener: (message: AnswerPortMessage) => void = () => undefined;
+    const port = {
+      name: ANSWER_PORT,
+      postMessage: () => {
+        throw new Error('Attempting to use a disconnected port object');
+      },
+      onMessage: { addListener: (fn: typeof listener) => (listener = fn) },
+    } as unknown as chrome.runtime.Port;
+
+    const rejections: unknown[] = [];
+    const onRejection = (reason: unknown) => rejections.push(reason);
+    process.on('unhandledRejection', onRejection);
+
+    handlePort(port);
+    store.token = 'tok';
+    listener({ kind: 'ask', sessionId: 's', question: 'Q?' });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    process.off('unhandledRejection', onRejection);
+    expect(rejections).toHaveLength(0);
+  });
+});
+
+describe('content script', () => {
+  it('pings the background while the answer streams so the service worker is not idled out', async () => {
+    vi.useFakeTimers();
+    const posted: AnswerPortMessage[] = [];
+    const port = {
+      name: ANSWER_PORT,
+      postMessage: (m: AnswerPortMessage) => posted.push(m),
+      onMessage: { addListener: vi.fn() },
+      disconnect: vi.fn(),
+    };
+    vi.resetModules();
+    vi.stubGlobal('chrome', {
+      runtime: {
+        connect: vi.fn(() => port),
+        sendMessage: vi.fn(() =>
+          Promise.resolve({ signedIn: true, sessions: [{ id: 's1', title: 'Acme', status: 'Live' }] }),
+        ),
+      },
+    });
+
+    await import('./content');
+    const root = document.querySelector('interview-copilot-overlay')!.shadowRoot!;
+    await vi.waitFor(() => expect((root.querySelector('[data-session]') as HTMLSelectElement).value).toBe('s1'));
+
+    (root.querySelector('[data-question]') as HTMLInputElement).value = 'Why us?';
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+
+    expect(posted[0]).toEqual({ kind: 'ask', sessionId: 's1', question: 'Why us?' });
+
+    // Chrome stops an idle MV3 service worker after ~30s; without a ping the stream dies.
+    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS);
+    expect(posted).toContainEqual({ kind: 'ping' });
+
+    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS);
+    expect(posted.filter((m) => m.kind === 'ping')).toHaveLength(2);
+
+    vi.useRealTimers();
   });
 });

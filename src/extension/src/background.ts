@@ -31,11 +31,18 @@ export function handlePort(port: chrome.runtime.Port): void {
     return;
   }
   port.onMessage.addListener((message: AnswerPortMessage) => {
+    // 'ping' only keeps this worker alive; the content script sends it while an answer streams.
     if (message.kind !== 'ask') {
       return;
     }
     void (async () => {
-      const send = (event: AnswerPortMessage) => port.postMessage(event);
+      const send = (event: AnswerPortMessage) => {
+        try {
+          port.postMessage(event);
+        } catch {
+          // The page is gone; nothing left to tell.
+        }
+      };
       const current = await token();
       if (!current) {
         send({ kind: 'event', event: { type: 'error', message: 'Sign in from the extension popup first.' } });
